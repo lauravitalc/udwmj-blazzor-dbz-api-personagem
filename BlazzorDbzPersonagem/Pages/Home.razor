@@ -1,0 +1,88 @@
+﻿@page "/"
+@using BlazzorDbzPersonagem.Models
+@inject HttpClient Http
+
+<PageTitle>Dbz</PageTitle>
+
+<h1>Dbz Personagem</h1>
+
+<div class="form-group">
+    <label for="dbz-input">
+        <input type="number" id="dbz-input" class="form-control" @bind="dbzId" placeholder="Digite o ID do personagem" />
+    </label>
+</div>
+
+<button class="btn btn-primary" @onclick="ConsultarDbz">Consultar API</button>
+
+@if (personagem != null)
+{
+    <h3>Resultado da API:</h3>
+    <table class="table table-bordered">
+        <tbody>
+        <tr>
+            <td><strong>Nome:</strong></td>
+            <td>@personagem.name</td>
+        </tr>
+        <tr>
+            <td><strong>Planeta:</strong></td>
+            <td>@(personagem.originPlanet?.name ?? "N/A")</td>
+        </tr>
+        <tr>
+            <td><strong>Transformações:</strong></td>
+            <td>
+                @if (personagem.transformations != null && personagem.transformations.Count > 0)
+                {
+                    <ul class="mb-0">
+                        @foreach (var t in personagem.transformations)
+                        {
+                            <li>@t.name</li>
+                        }
+                    </ul>
+                }
+                else
+                {
+                    <span>Nenhuma</span>
+                }
+            </td>
+        </tr>
+        </tbody>
+    </table>
+}
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger mt-3">@errorMessage</div>
+}
+
+@code {
+    private int dbzId;
+    private Personagem? personagem;
+    private string? errorMessage;
+
+    private async Task ConsultarDbz()
+    {
+        errorMessage  = string.Empty;
+        personagem = null;
+
+        if(dbzId <= 0){
+            errorMessage = "Por favor, digite um ID válido.";
+            return;
+        }
+        
+        try
+        {
+            string url = $"https://dragonball-api.com/api/characters/{dbzId}";
+            personagem = await Http.GetFromJsonAsync<Personagem>(url);
+
+            if (personagem == null)
+            {
+                errorMessage = "Personagem não encontrado.";
+                personagem = null;
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Erro ao consultar a API: {ex.Message}";
+        }
+    }
+}
